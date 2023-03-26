@@ -28,6 +28,8 @@ def home(path):
 #    return render_template("index.html")
 
 
+####Everything below is currently not being ran with React addition!####
+
 #Login procedure - called on button in HTML.
 @app.route('/login', methods=['POST'])
 def loginFunc():
