@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://use.typekit.net/yxr5awy.css');
+
+:root {
+  color-scheme: only dark;
+}
+
+main {
+  background-color: none !important;
+}
+
+html {
+  background-color: #0c0a0a;
+}
