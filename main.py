@@ -1,23 +1,31 @@
-from flask import Flask, render_template, session, url_for, redirect, request
+from flask import Flask, send_from_directory, render_template, session, url_for, redirect, request
+from flask_restful import Api, Resource, reqparse
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
+from api.apihandler import apihandler
 import os
 import time
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder='frontend/build')
+CORS(app)
+api = Api(app)
+api.add_resource(apihandler, '/flask/hello')
 app.secret_key = os.urandom(12)
 app.config['SESSION_COOKIE_NAME'] = 'maestro_cookie'
 TOKEN_INFO = "token_info"
 
 #Home Page - default route
-@app.route('/')
-def home():
-    return render_template("index.html")
 
-@app.route('/index.html')
-def home_page():
-    return render_template("index.html")
+@app.route('/', defaults={'path':''})
+def home(path):
+    return send_from_directory(app.static_folder,'index.html')
+    #return render_template("index.html")
+
+#@app.route('/index.html')
+#def home_page():
+#    return render_template("index.html")
 
 
 #Login procedure - called on button in HTML.
