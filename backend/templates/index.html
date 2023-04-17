@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/static/react/favicon.ico" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="/static/react/logo192.png" />
+    <link rel="manifest" href="/static/react/manifest.json" />
+    <title>Maestro</title>
+    <script>
+        if (window.location.hash) {
+            const token = window.location.hash
+              .substring(1)
+              .split("&")
+              .reduce(function(initial, item) {
+                if (item) {
+                  var parts = item.split("=");
+                  initial[parts[0]] = decodeURIComponent(parts[1]);
+                }
+                return initial;
+              }, {});
+        
+            const searchParams = new URLSearchParams(window.location.search);
+            searchParams.set('access_token', token.access_token);
+            searchParams.set('token_type', token.token_type);
+            searchParams.set('expires_in', token.expires_in);
+        
+            const newUrl = "http://localhost:3000" + window.location.pathname + '?' + searchParams.toString();
+            window.location.replace(newUrl);
+        
+            // save token to localStorage
+            localStorage.setItem('access_token', token.access_token);
+        }
+    </script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
