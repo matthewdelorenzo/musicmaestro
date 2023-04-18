@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { authEndpoint, clientId, redirectUri, scopes } from "./config";
-import hash from "./hash";
 import axios from "axios";
 import frontgraphic from "./frontgraphic.png";
-
-const SERVER_URL = "http://127.0.0.1:5000"; // Replace with your own server URL
 
 const genresData = {
   genres: [
@@ -148,7 +145,6 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tokenParam = params.get("access_token");
-    console.log(tokenParam);
     if (tokenParam) {
       localStorage.setItem("token", tokenParam);
       setToken(tokenParam);
@@ -275,7 +271,7 @@ function App() {
     if (!genre || !playlistAttributes) {
       return;
     }
-  
+
     try {
       const response = await axios({
         url: "https://api.spotify.com/v1/recommendations",
@@ -292,16 +288,83 @@ function App() {
           target_liveness: playlistAttributes.liveness,
           target_valence: playlistAttributes.valence,
           limit: 10,
-          max_popularity: 40,
+          max_popularity: 20,
         },
       });
-  
+
       setNewPlaylist(response.data.tracks);
     } catch (error) {
       console.log(error);
     }
   };
-  
+
+  const createPlaylist = async () => {
+    try {
+      const userId = await getUserId();
+      const playlistId = await createNewPlaylist(userId);
+      await addTracksToPlaylist(playlistId);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getUserId = async () => {
+    try {
+      const response = await axios({
+        url: "https://api.spotify.com/v1/me",
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data.id;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  };
+
+  const createNewPlaylist = async (userId) => {
+    try {
+      const response = await axios({
+        url: `https://api.spotify.com/v1/users/${userId}/playlists`,
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        data: {
+          name: `${playlist.name} - ${
+            genre.charAt(0).toUpperCase() + genre.slice(1)
+          } Remix`,
+          description: "Created by Maestro, tailored to your music taste.",
+        },
+      });
+      return response.data.id;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  };
+
+  const addTracksToPlaylist = async (playlistId) => {
+    try {
+      const uris = newPlaylist.map((track) => track.uri);
+      await axios({
+        url: `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        data: {
+          uris: uris,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div>
@@ -310,7 +373,7 @@ function App() {
           Maestro
         </h1>
       </div>
-      <div className="flex w-screen min-h-screen items-center justify-center">
+      <div className="flex w-screen min-h-screen justify-center pt-[89px] pl-4 pr-4">
         {token && !playlist && !newPlaylist ? (
           <div className="flex flex-col items-left justify-center gap-5">
             <h1 className="font-titles font-extrabold tracking-tighter text-xl md:text-3xl">
@@ -330,7 +393,7 @@ function App() {
                     <img
                       src={playlist.images[0].url}
                       alt={playlist.name}
-                      className="hover:grayscale hover:contrast-100 duration-300 h-[200px] w-[200px]"
+                      className="hover:grayscale hover:contrast-100 duration-300 object-contain h-48 w-48"
                     />
                     <p className="font-titles font-extrabold tracking-tighter">
                       {playlist.name}
@@ -340,47 +403,54 @@ function App() {
             </div>
           </div>
         ) : token && playlist && !newPlaylist ? (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col w-auto justify-center md:w-1/3 gap-6">
             <h1 className="font-titles font-extrabold tracking-tighter text-xl md:text-3xl">
-              {playlist.name}
+              Your Selected Playlist - {playlist.name}
             </h1>
-            <div className="flex gap-10">
-              <div className="flex flex-col items-center justify-center gap-2">
+            <div className="flex gap-10 justify-between">
+              <div className="flex items-center justify-center">
                 <img
                   src={playlist.images[0].url}
                   alt={playlist.name}
-                  className="hover:grayscale hover:contrast-100 duration-300 h-[200px] w-[200px]"
+                  className="object-contain h-48 w-48"
                 />
               </div>
-              <div className="flex flex-col gap-4 w-[300px] justify-center">
+              <div className="flex flex-col gap-4 w-1/2 justify-center">
                 {playlistAttributes && (
-                  <p className="font-body font-regular text-sm md:text-lg">
-                    This playlist is{" "}
-                    <span className="font-body font-bold">
-                      {(playlistAttributes.acousticness * 100).toFixed(2)}%
-                      acoustic
-                    </span>
-                    ,{" "}
-                    <span className="font-body font-bold">
-                      {(playlistAttributes.danceability * 100).toFixed(2)}%
-                      danceable, {(playlistAttributes.energy * 100).toFixed(2)}%
-                      energetic
-                    </span>
-                    ,{" "}
-                    <span className="font-body font-bold">
-                      {(playlistAttributes.instrumentalness * 100).toFixed(2)}%
-                      instrumental
-                    </span>
-                    ,{" "}
-                    <span className="font-body font-bold">
-                      {(playlistAttributes.liveness * 100).toFixed(2)}% lively
-                    </span>
-                    , and{" "}
-                    <span className="font-body font-bold">
-                      {(playlistAttributes.valence * 100).toFixed(2)}% positive
-                    </span>
-                    .
-                  </p>
+                  <div className="flex flex-col gap-2">
+                    <p className="font-body font-regular text-sm md:text-lg">
+                      This playlist is{" "}
+                      <span className="font-body font-bold">
+                        {(playlistAttributes.acousticness * 100).toFixed(2)}%
+                        acoustic
+                      </span>
+                      ,{" "}
+                      <span className="font-body font-bold">
+                        {(playlistAttributes.danceability * 100).toFixed(2)}%
+                        danceable,{" "}
+                        {(playlistAttributes.energy * 100).toFixed(2)}%
+                        energetic
+                      </span>
+                      ,{" "}
+                      <span className="font-body font-bold">
+                        {(playlistAttributes.instrumentalness * 100).toFixed(2)}
+                        % instrumental
+                      </span>
+                      ,{" "}
+                      <span className="font-body font-bold">
+                        {(playlistAttributes.liveness * 100).toFixed(2)}% lively
+                      </span>
+                      , and{" "}
+                      <span className="font-body font-bold">
+                        {(playlistAttributes.valence * 100).toFixed(2)}%
+                        positive
+                      </span>
+                      .
+                    </p>
+                    <p className="font-body font-regular text-sm md:text-lg">
+                      Now, choose a genre.
+                    </p>
+                  </div>
                 )}
                 <select
                   id="genres"
@@ -395,41 +465,73 @@ function App() {
                 </select>
               </div>
             </div>
-            <button
-              onClick={fetchRecommendations}
-              className="bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
-            >
-              Send
-            </button>
-            <button
-              onClick={() => setPlaylist(null)}
-              className="bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
-            >
-              BACK
-            </button>
+            <div className="flex w-100% gap-10">
+              <button
+                onClick={() => {
+                  setPlaylist(null);
+                  setGenre("");
+                }}
+                className="w-full bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
+              >
+                BACK
+              </button>
+              <button
+                onClick={fetchRecommendations}
+                className="w-full bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
+              >
+                Send
+              </button>
+            </div>
           </div>
         ) : null}
-        {newPlaylist ?     
-        <div>
-          <h2 className="font-titles font-extrabold tracking-tighter text-xl md:text-2xl">Recommended Tracks</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {newPlaylist.map((track) => (
-              <div key={track.id} className="flex items-center gap-4">
-                <img src={track.album.images[0].url} alt={track.name} className="w-20 h-20" />
-                <div>
-                  <p className="font-titles font-bold text-sm">{track.name}</p>
-                  <p className="font-body font-regular text-xs">{track.artists[0].name}</p>
+        {newPlaylist ? (
+          <div className="flex flex-col w-auto  md:w-1/3 gap-6 justify-center">
+            <div>
+              <h1 className="font-titles font-extrabold tracking-tighter text-xl md:text-2xl">
+                Your new playlist is here.
+              </h1>
+              <p className="font-body font-regular text-sm md:text-lg">
+                Enjoy your new adventure into the world of {genre} music.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {newPlaylist.map((track) => (
+                <div key={track.id} className="flex items-center gap-4">
+                  <img
+                    src={track.album.images[0].url}
+                    alt={track.name}
+                    className="w-20 h-20"
+                  />
+                  <div>
+                    <p className="font-titles font-bold text-sm">
+                      {track.name}
+                    </p>
+                    <p className="font-body font-regular text-xs">
+                      {track.artists[0].name}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-            <button
-              onClick={() => setNewPlaylist(null)}
-              className="bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
-            >
-              BACK
-            </button>
+              ))}
+            </div>
+            <div className="flex w-100% gap-10">
+              <button
+                onClick={() => {
+                  setPlaylist(null);
+                  setNewPlaylist(null);
+                }}
+                className="w-full bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
+              >
+                BACK
+              </button>
+              <button
+                onClick={createPlaylist}
+                className="w-full bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
+              >
+                Export to Spotify
+              </button>
+            </div>
           </div>
-        </div> : null}
+        ) : null}
         {!token ? (
           <div className="flex flex-col md:flex-row px-24 gap-3 items-center justify-between">
             <div className="flex flex-col w-[50%] gap-3">
@@ -445,12 +547,12 @@ function App() {
               </p>
               <button
                 onClick={handleLogin}
-                className="bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full lg:w-1/3"
+                className="bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full lg:w-1/2"
               >
                 Connect with Spotify
               </button>
             </div>
-            <img src={frontgraphic} alt="" className="max-w-lg" />
+            <img src={frontgraphic} alt="" className="max-w-md" />
           </div>
         ) : null}
       </div>

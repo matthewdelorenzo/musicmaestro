@@ -6,6 +6,5 @@ export const redirectUri = "http://127.0.0.1:5000";
 export const scopes = [
     "user-library-read",
     "user-top-read",
-    "user-read-currently-playing",
-    "user-read-playback-state",
+    "playlist-modify-public",
 ];
