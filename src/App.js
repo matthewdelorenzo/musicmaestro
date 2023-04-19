@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { authEndpoint, clientId, redirectUri, scopes } from "./config";
 import axios from "axios";
 import frontgraphic from "./frontgraphic.png";
+import NoArtistImage from "./NoArtistImage.jpeg"
+import NoPlaylistImage from "./NoPlaylistImage.png"
 
 const genresData = {
   genres: [
@@ -141,6 +143,7 @@ function App() {
   const [genre, setGenre] = useState("");
   const [token, setToken] = useState("");
   const [newPlaylist, setNewPlaylist] = useState();
+  const [exported, setExported] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -271,7 +274,7 @@ function App() {
     if (!genre || !playlistAttributes) {
       return;
     }
-
+  
     try {
       const response = await axios({
         url: "https://api.spotify.com/v1/recommendations",
@@ -287,22 +290,38 @@ function App() {
           target_instrumentalness: playlistAttributes.instrumentalness,
           target_liveness: playlistAttributes.liveness,
           target_valence: playlistAttributes.valence,
-          limit: 10,
+          limit: 30,
           max_popularity: 20,
         },
       });
-
-      setNewPlaylist(response.data.tracks);
+  
+      const tracks = response.data.tracks;
+      const artists = await Promise.all(tracks.map((track) => axios.get(`https://api.spotify.com/v1/artists/${track.artists[0].id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })));
+  
+      const updatedTracks = tracks.map((track, index) => {
+        const artistImage = artists[index].data.images[0]?.url;
+        return {
+          ...track,
+          artistImage: artistImage || null
+        }
+      });
+  
+      setNewPlaylist(updatedTracks);
     } catch (error) {
       console.log(error);
     }
-  };
+  };  
 
   const createPlaylist = async () => {
     try {
       const userId = await getUserId();
       const playlistId = await createNewPlaylist(userId);
       await addTracksToPlaylist(playlistId);
+      setExported(true);
     } catch (error) {
       console.log(error);
     }
@@ -391,7 +410,7 @@ function App() {
                     }}
                   >
                     <img
-                      src={playlist.images[0].url}
+                      src={playlist.images[0]?.url || NoPlaylistImage}
                       alt={playlist.name}
                       className="hover:grayscale hover:contrast-100 duration-300 object-contain h-48 w-48"
                     />
@@ -405,15 +424,18 @@ function App() {
         ) : token && playlist && !newPlaylist ? (
           <div className="flex flex-col w-auto justify-center md:w-1/3 gap-6">
             <h1 className="font-titles font-extrabold tracking-tighter text-xl md:text-3xl">
-              Your Selected Playlist - {playlist.name}
+              Your Selected Playlist
             </h1>
             <div className="flex gap-10 justify-between">
-              <div className="flex items-center justify-center">
+              <div className="flex flex-col items-center justify-between">
                 <img
-                  src={playlist.images[0].url}
+                  src={playlist.images[0]?.url || NoPlaylistImage}
                   alt={playlist.name}
                   className="object-contain h-48 w-48"
                 />
+                <h3 className="font-titles font-extrabold tracking-tighter">
+                  {playlist.name}
+                </h3>
               </div>
               <div className="flex flex-col gap-4 w-1/2 justify-center">
                 {playlistAttributes && (
@@ -485,50 +507,87 @@ function App() {
           </div>
         ) : null}
         {newPlaylist ? (
-          <div className="flex flex-col w-auto  md:w-1/3 gap-6 justify-center">
-            <div>
-              <h1 className="font-titles font-extrabold tracking-tighter text-xl md:text-2xl">
+          <div className="flex flex-col w-auto gap-6 justify-center">
+            <div className="flex flex-col w-auto gap-2 justify-center items-center">
+              <h1 className="font-titles font-extrabold tracking-tighter text-2xl md:text-4xl">
                 Your new playlist is here.
               </h1>
-              <p className="font-body font-regular text-sm md:text-lg">
+              <p className="font-body font-regular text-base">
                 Enjoy your new adventure into the world of {genre} music.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {newPlaylist.map((track) => (
-                <div key={track.id} className="flex items-center gap-4">
-                  <img
-                    src={track.album.images[0].url}
-                    alt={track.name}
-                    className="w-20 h-20"
-                  />
-                  <div>
-                    <p className="font-titles font-bold text-sm">
-                      {track.name}
-                    </p>
-                    <p className="font-body font-regular text-xs">
-                      {track.artists[0].name}
+            <div className="flex justify-center gap-8">
+              <div className="flex flex-col gap-3 justify-center">
+                <div className="grid grid-cols-2">
+                  {newPlaylist.slice(0, 4).map((track) => (
+                    <div key={track.id} className="flex items-center">
+                      <img
+                        src={track.album.images[0].url}
+                        alt={track.name}
+                        className="object-contain w-36 h-36"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex w-full justify-center">
+                  <h1 className="font-titles font-extrabold tracking-tighter text-lg">
+                    {`${playlist.name} - ${genre.charAt(0).toUpperCase() + genre.slice(1)} Remix`}
+                  </h1>
+                </div>
+                <div className="flex w-full justify-center">
+                  <button
+                    onClick={createPlaylist}
+                    className="bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
+                  >
+                    Export to Spotify
+                  </button>
+                </div>
+                {exported ? (
+                  <div className="flex w-full justify-center">
+                    <p className="font-body font-regular text-sm">
+                      Playlist has been exported!
                     </p>
                   </div>
+                ) : null}
+              </div>
+              <div className="flex flex-col gap-3 w-1/2">
+                <h1 className="font-titles font-extrabold tracking-tighter text-2xl">
+                  How we decided
+                </h1>
+                <p className="font-body font-regular">
+                  Our app analyzes your existing Spotify playlists and their attributes, such as acousticness, danceability, energy, and more. Based on these insights and your chosen genre, we curate a personalized playlist of recommendations to match your unique music taste.
+                </p>
+                <h1 className="font-titles font-extrabold tracking-tighter text-2xl">
+                  Featuring
+                </h1>
+                <div className="grid grid-cols-4 gap-4">
+                  {newPlaylist.slice(0, 4).map((track) => (
+                    <div key={track.id} className="flex flex-col items-center gap-4">
+                      <img
+                        src={track.artistImage ? track.artistImage : NoArtistImage}
+                        alt={track.name}
+                        className="object-contain w-28 h-28 rounded-full"
+                      />
+                      <h1 className="font-titles font-extrabold tracking-tighter text-sm">
+                        {track.artists[0].name}
+                      </h1>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="flex w-100% gap-10">
-              <button
-                onClick={() => {
-                  setPlaylist(null);
-                  setNewPlaylist(null);
-                }}
-                className="w-full bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
-              >
-                BACK
-              </button>
-              <button
-                onClick={createPlaylist}
-                className="w-full bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
-              >
-                Export to Spotify
-              </button>
+                <div className="flex w-full justify-center">
+                  <button
+                    onClick={() => {
+                      setPlaylist(null);
+                      setNewPlaylist(null);
+                      setGenre("");
+                      setExported(false);
+                    }}
+                    className="w-1/5 bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
+                  >
+                    BACK
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ) : null}
