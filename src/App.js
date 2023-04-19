@@ -363,7 +363,7 @@ function App() {
           name: `${playlist.name} - ${
             genre.charAt(0).toUpperCase() + genre.slice(1)
           } Remix`,
-          description: "Created by Maestro, tailored to your music taste.",
+          description: `Created by Maestro, tailored to your music taste. Enjoy your new ${genre} playlist!`,
         },
       });
       return response.data.id;
@@ -531,7 +531,7 @@ function App() {
                       <img
                         src={track.album.images[0].url}
                         alt={track.name}
-                        className="object-cover w-36 h-36 md:w-24 md:h-24"
+                        className="object-cover w-36 h-36 md:w-28 md:h-28"
                       />
                     </div>
                   ))}
@@ -563,12 +563,19 @@ function App() {
                 <h1 className="font-titles font-extrabold tracking-tighter text-2xl">
                   How we decided
                 </h1>
-                <p className="font-body font-regular">
-                  Our app analyzes your existing Spotify playlists and their
-                  attributes, such as acousticness, danceability, energy, and
+                <p className="font-body font-sm">
+                  Our app analyzes your playlist and their attributes, such as 
+                  acousticness, danceability, and
                   more. Based on these insights and your chosen genre, we curate
-                  a personalized playlist of recommendations to match your
+                  a personalized playlist to match your
                   unique music taste.
+                </p>
+                <h1 className="font-titles font-extrabold tracking-tighter text-2xl">
+                  What to expect
+                </h1>
+                <p className="font-body font-sm">
+                  You'll find 30 new tracks in the {genre} genre, all tailored to
+                  the specificities of your playlist. All you have to do now is enjoy.
                 </p>
                 <h1 className="font-titles font-extrabold tracking-tighter text-2xl">
                   Featuring
