@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { authEndpoint, clientId, redirectUri, scopes } from "./config";
 import axios from "axios";
 import frontgraphic from "./frontgraphic.png";
-import NoArtistImage from "./NoArtistImage.jpeg"
-import NoPlaylistImage from "./NoPlaylistImage.png"
+import NoArtistImage from "./NoArtistImage.jpeg";
+import NoPlaylistImage from "./NoPlaylistImage.png";
 
 const genresData = {
   genres: [
@@ -274,7 +274,7 @@ function App() {
     if (!genre || !playlistAttributes) {
       return;
     }
-  
+
     try {
       const response = await axios({
         url: "https://api.spotify.com/v1/recommendations",
@@ -294,27 +294,34 @@ function App() {
           max_popularity: 20,
         },
       });
-  
+
       const tracks = response.data.tracks;
-      const artists = await Promise.all(tracks.map((track) => axios.get(`https://api.spotify.com/v1/artists/${track.artists[0].id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })));
-  
+      const artists = await Promise.all(
+        tracks.map((track) =>
+          axios.get(
+            `https://api.spotify.com/v1/artists/${track.artists[0].id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+        )
+      );
+
       const updatedTracks = tracks.map((track, index) => {
         const artistImage = artists[index].data.images[0]?.url;
         return {
           ...track,
-          artistImage: artistImage || null
-        }
+          artistImage: artistImage || null,
+        };
       });
-  
+
       setNewPlaylist(updatedTracks);
     } catch (error) {
       console.log(error);
     }
-  };  
+  };
 
   const createPlaylist = async () => {
     try {
@@ -392,13 +399,13 @@ function App() {
           Maestro
         </h1>
       </div>
-      <div className="flex w-screen min-h-screen justify-center pt-[89px] pl-4 pr-4">
+      <div className="flex w-screen min-h-screen justify-center pt-[89px] pb-[59px] px-4">
         {token && !playlist && !newPlaylist ? (
           <div className="flex flex-col items-left justify-center gap-5">
-            <h1 className="font-titles font-extrabold tracking-tighter text-xl md:text-3xl">
+            <h1 className="font-titles font-extrabold tracking-tighter text-3xl md:text-4xl">
               Select a playlist.
             </h1>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {playlists &&
                 playlists.map((playlist) => (
                   <div
@@ -422,22 +429,22 @@ function App() {
             </div>
           </div>
         ) : token && playlist && !newPlaylist ? (
-          <div className="flex flex-col w-auto justify-center md:w-1/3 gap-6">
-            <h1 className="font-titles font-extrabold tracking-tighter text-xl md:text-3xl">
+          <div className="flex flex-col w-full px-4 justify-center items-center lg:items-start md:w-2/5 gap-6">
+            <h1 className="font-titles font-extrabold tracking-tighter text-3xl md:text-4xl">
               Your Selected Playlist
             </h1>
-            <div className="flex gap-10 justify-between">
+            <div className="flex flex-col lg:flex-row gap-10 justify-between">
               <div className="flex flex-col items-center justify-between">
                 <img
                   src={playlist.images[0]?.url || NoPlaylistImage}
                   alt={playlist.name}
-                  className="object-contain h-48 w-48"
+                  className="object-cover h-48 w-48"
                 />
-                <h3 className="font-titles font-extrabold tracking-tighter">
+                <h3 className="font-titles font-extrabold tracking-tighter mt-4 text-lg">
                   {playlist.name}
                 </h3>
               </div>
-              <div className="flex flex-col gap-4 w-1/2 justify-center">
+              <div className="flex flex-col gap-4 w-full lg:w-1/2 justify-center">
                 {playlistAttributes && (
                   <div className="flex flex-col gap-2">
                     <p className="font-body font-regular text-sm md:text-lg">
@@ -478,7 +485,7 @@ function App() {
                   id="genres"
                   onChange={handleGenreChange}
                   value={genre}
-                  className="bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
+                  className="bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full w-full mt-4"
                 >
                   <option selected value="">
                     Choose a genre
@@ -487,7 +494,7 @@ function App() {
                 </select>
               </div>
             </div>
-            <div className="flex w-100% gap-10">
+            <div className="flex w-full gap-10 mt-6">
               <button
                 onClick={() => {
                   setPlaylist(null);
@@ -507,34 +514,36 @@ function App() {
           </div>
         ) : null}
         {newPlaylist ? (
-          <div className="flex flex-col w-auto gap-6 justify-center">
-            <div className="flex flex-col w-auto gap-2 justify-center items-center">
-              <h1 className="font-titles font-extrabold tracking-tighter text-2xl md:text-4xl">
+          <div className="flex flex-col w-full px-4 gap-6 justify-center">
+            <div className="flex flex-col w-full gap-2 justify-center items-center">
+              <h1 className="font-titles font-extrabold tracking-tighter text-3xl md:text-4xl">
                 Your new playlist is here.
               </h1>
-              <p className="font-body font-regular text-base">
+              <p className="font-body font-regular text-xs md:text-base">
                 Enjoy your new adventure into the world of {genre} music.
               </p>
             </div>
-            <div className="flex justify-center gap-8">
-              <div className="flex flex-col gap-3 justify-center">
-                <div className="grid grid-cols-2">
+            <div className="flex flex-wrap justify-center gap-8">
+              <div className="flex flex-col gap-3 justify-center items-center">
+                <div className="grid grid-cols-2 gap-4">
                   {newPlaylist.slice(0, 4).map((track) => (
                     <div key={track.id} className="flex items-center">
                       <img
                         src={track.album.images[0].url}
                         alt={track.name}
-                        className="object-contain w-36 h-36"
+                        className="object-cover w-36 h-36 md:w-24 md:h-24"
                       />
                     </div>
                   ))}
                 </div>
-                <div className="flex w-full justify-center">
+                <div className="flex w-full justify-center mt-4">
                   <h1 className="font-titles font-extrabold tracking-tighter text-lg">
-                    {`${playlist.name} - ${genre.charAt(0).toUpperCase() + genre.slice(1)} Remix`}
+                    {`${playlist.name} - ${
+                      genre.charAt(0).toUpperCase() + genre.slice(1)
+                    } Remix`}
                   </h1>
                 </div>
-                <div className="flex w-full justify-center">
+                <div className="flex w-full justify-center mt-4">
                   <button
                     onClick={createPlaylist}
                     className="bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
@@ -543,30 +552,39 @@ function App() {
                   </button>
                 </div>
                 {exported ? (
-                  <div className="flex w-full justify-center">
+                  <div className="flex w-full justify-center mt-4">
                     <p className="font-body font-regular text-sm">
                       Playlist has been exported!
                     </p>
                   </div>
                 ) : null}
               </div>
-              <div className="flex flex-col gap-3 w-1/2">
+              <div className="flex flex-col gap-3 w-full md:w-2/5">
                 <h1 className="font-titles font-extrabold tracking-tighter text-2xl">
                   How we decided
                 </h1>
                 <p className="font-body font-regular">
-                  Our app analyzes your existing Spotify playlists and their attributes, such as acousticness, danceability, energy, and more. Based on these insights and your chosen genre, we curate a personalized playlist of recommendations to match your unique music taste.
+                  Our app analyzes your existing Spotify playlists and their
+                  attributes, such as acousticness, danceability, energy, and
+                  more. Based on these insights and your chosen genre, we curate
+                  a personalized playlist of recommendations to match your
+                  unique music taste.
                 </p>
                 <h1 className="font-titles font-extrabold tracking-tighter text-2xl">
                   Featuring
                 </h1>
                 <div className="grid grid-cols-4 gap-4">
                   {newPlaylist.slice(0, 4).map((track) => (
-                    <div key={track.id} className="flex flex-col items-center gap-4">
+                    <div
+                      key={track.id}
+                      className="flex flex-col items-center gap-4"
+                    >
                       <img
-                        src={track.artistImage ? track.artistImage : NoArtistImage}
+                        src={
+                          track.artistImage ? track.artistImage : NoArtistImage
+                        }
                         alt={track.name}
-                        className="object-contain w-28 h-28 rounded-full"
+                        className="object-cover w-28 h-28 md:w-20 md:h-20 rounded-full"
                       />
                       <h1 className="font-titles font-extrabold tracking-tighter text-sm">
                         {track.artists[0].name}
@@ -574,7 +592,7 @@ function App() {
                     </div>
                   ))}
                 </div>
-                <div className="flex w-full justify-center">
+                <div className="flex w-full justify-center mt-6">
                   <button
                     onClick={() => {
                       setPlaylist(null);
