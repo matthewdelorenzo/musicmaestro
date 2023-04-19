@@ -505,8 +505,13 @@ function App() {
                 BACK
               </button>
               <button
+                disabled={genre === ""}
                 onClick={fetchRecommendations}
-                className="w-full bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full"
+                className={`w-full bg-green hover:bg-dark-green duration-300 text-white font-titles font-bold text-xs md:text-sm uppercase py-2 px-4 rounded-full ${
+                  genre === ""
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-dark-green"
+                }`}
               >
                 Send
               </button>
@@ -531,7 +536,7 @@ function App() {
                       <img
                         src={track.album.images[0].url}
                         alt={track.name}
-                        className="object-cover w-36 h-36 md:w-28 md:h-28"
+                        className="object-contain lg:object-cover w-36 h-36 md:w-28 md:h-28"
                       />
                     </div>
                   ))}
@@ -564,18 +569,18 @@ function App() {
                   How we decided
                 </h1>
                 <p className="font-body font-sm">
-                  Our app analyzes your playlist and their attributes, such as 
-                  acousticness, danceability, and
-                  more. Based on these insights and your chosen genre, we curate
-                  a personalized playlist to match your
-                  unique music taste.
+                  Our app analyzes your playlist and its attributes, such as
+                  acousticness, danceability, and more. Based on these insights
+                  and your chosen genre, we curate a personalized playlist to
+                  match your unique music taste.
                 </p>
                 <h1 className="font-titles font-extrabold tracking-tighter text-2xl">
                   What to expect
                 </h1>
                 <p className="font-body font-sm">
-                  You'll find 30 new tracks in the {genre} genre, all tailored to
-                  the specificities of your playlist. All you have to do now is enjoy.
+                  You'll find 30 new tracks in the {genre} genre, all tailored
+                  to the specificities of your playlist. All you have to do now
+                  is enjoy.
                 </p>
                 <h1 className="font-titles font-extrabold tracking-tighter text-2xl">
                   Featuring
